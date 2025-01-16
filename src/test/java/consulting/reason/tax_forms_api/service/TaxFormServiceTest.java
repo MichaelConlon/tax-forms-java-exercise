@@ -3,8 +3,11 @@ package consulting.reason.tax_forms_api.service;
 import consulting.reason.tax_forms_api.AbstractServiceTest;
 import consulting.reason.tax_forms_api.dto.TaxFormDetailsDto;
 import consulting.reason.tax_forms_api.dto.TaxFormDto;
+import consulting.reason.tax_forms_api.dto.TaxFormHistoryDto;
 import consulting.reason.tax_forms_api.dto.request.TaxFormDetailsRequest;
 import consulting.reason.tax_forms_api.entity.TaxForm;
+import consulting.reason.tax_forms_api.entity.TaxFormHistory;
+import consulting.reason.tax_forms_api.enums.TaxFormHistoryStatus;
 import consulting.reason.tax_forms_api.enums.TaxFormStatus;
 import consulting.reason.tax_forms_api.exception.TaxFormStatusException;
 import consulting.reason.tax_forms_api.repository.TaxFormRepository;
@@ -25,6 +28,8 @@ public class TaxFormServiceTest extends AbstractServiceTest {
     private TaxFormService taxFormService;
     private TaxForm taxForm;
     private TaxFormDto taxFormDto;
+    private TaxFormHistoryDto taxFormHistoryDto;
+    private TaxFormHistory taxFormHistory;
     private final TaxFormDetailsRequest taxFormDetailsRequest = TaxFormDetailsRequest.builder()
             .ratio(0.5)
             .assessedValue(100)
@@ -38,6 +43,11 @@ public class TaxFormServiceTest extends AbstractServiceTest {
                 taxFormRepository,
                 modelMapper
         );
+
+        taxFormHistory = TaxFormHistory.builder()
+                .taxForm(taxForm)
+                .status(TaxFormHistoryStatus.SUBMITTED)
+                .build();
 
         taxForm = taxFormRepository.save(TaxForm.builder()
                 .formName("Test Form 1")

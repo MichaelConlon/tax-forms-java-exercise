@@ -19,21 +19,29 @@ import java.time.ZonedDateTime;
 @Table(name = "tax_forms")
 @Entity
 public class TaxForm {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Integer id;
     @Column(nullable = false)
+
     private Integer formYear;
+    
     @Column(nullable = false)
     private String formName;
+
     @Type(JsonType.class)
     @Column(name = "details", columnDefinition = "VARCHAR2")
     private TaxFormDetailsDto details;
+
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
     private TaxFormStatus status;
+
     @CreationTimestamp
     private ZonedDateTime createdAt;
+
     @UpdateTimestamp
     private ZonedDateTime updatedAt;
 }

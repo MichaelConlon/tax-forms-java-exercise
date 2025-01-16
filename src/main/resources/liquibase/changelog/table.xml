@@ -31,6 +31,32 @@
             );
         </sql>
         <comment>
+            Creates the tax_form_histories table.
+        </comment>
+    </changeSet>
+    <changeSet id="TABLE_02" runOnChange="false" author="mc">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tax_form_histories"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE tax_form_histories (
+                id          SERIAL PRIMARY KEY,
+                tax_form_id INTEGER                  NOT NULL,
+                created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                type        VARCHAR                  NOT NULL,
+                CONSTRAINT  fk_tax_form
+                    FOREIGN KEY (tax_form_id)
+                    REFERENCES tax_forms(id),
+                CHECK ( type IN (
+                                'SUBMITTED',
+                                'RETURNED',
+                                'ACCEPTED'
+                    ) )
+            );
+        </sql>
+        <comment>
             Creates the tax_forms table.
         </comment>
     </changeSet>

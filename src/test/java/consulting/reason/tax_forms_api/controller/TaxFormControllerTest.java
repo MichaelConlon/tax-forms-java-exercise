@@ -124,17 +124,20 @@ public class TaxFormControllerTest extends AbstractControllerTest {
 
     @Test
     void testSaveWithValidRequest_OptionalFieldsNull() throws Exception {
-        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+        TaxFormDetailsRequest validRequest = TaxFormDetailsRequest.builder()
                 .assessedValue(100)
-                .appraisedValue(1000L)
-                .ratio(null)
+                .appraisedValue(null)
+                .ratio(0.5)
                 .comments(null)
                 .build();
 
+        given(taxFormService.save(taxFormDto.getId(), validRequest)).willReturn(Optional.of(taxFormDto));
+
         mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
-                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .content(objectMapper.writeValueAsString(validRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(taxFormDto)));
     }
 
     // ASSESSED VALUE

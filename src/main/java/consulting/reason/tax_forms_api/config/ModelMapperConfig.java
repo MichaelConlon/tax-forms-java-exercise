@@ -1,9 +1,12 @@
 package consulting.reason.tax_forms_api.config;
 
 import consulting.reason.tax_forms_api.dto.TaxFormDetailsDto;
+import consulting.reason.tax_forms_api.dto.TaxFormHistoryDto;
 import consulting.reason.tax_forms_api.dto.TaxFormDto;
 import consulting.reason.tax_forms_api.dto.request.TaxFormDetailsRequest;
 import consulting.reason.tax_forms_api.entity.TaxForm;
+import consulting.reason.tax_forms_api.entity.TaxFormHistory;
+
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +41,16 @@ public class ModelMapperConfig {
                     .details(taxForm.getDetails())
                     .createdAt(taxForm.getCreatedAt())
                     .updatedAt(taxForm.getUpdatedAt())
+                    .build();
+        });
+
+        modelMapper.typeMap(TaxFormHistory.class, TaxFormHistoryDto.class).setConverter(context -> {
+            TaxFormHistory taxFormHistory = context.getSource();
+
+            return TaxFormHistoryDto.builder()
+                    .taxFormId(taxFormHistory.getTaxForm().getId())
+                    .createdAt(taxFormHistory.getCreatedAt())
+                    .status(taxFormHistory.getStatus())
                     .build();
         });
 
