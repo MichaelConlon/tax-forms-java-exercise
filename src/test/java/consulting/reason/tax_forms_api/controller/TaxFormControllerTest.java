@@ -24,10 +24,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(value = TaxFormController.class)
 public class TaxFormControllerTest extends AbstractControllerTest {
+
     @Autowired
     protected MockMvc mockMvc;
     @MockBean
     private TaxFormService taxFormService;
+
     private final TaxFormDetailsDto taxFormDetailsDto = TaxFormDetailsDto.builder()
             .ratio(0.5)
             .assessedValue(100)
@@ -94,5 +96,154 @@ public class TaxFormControllerTest extends AbstractControllerTest {
                         .content(objectMapper.writeValueAsString(taxFormDetailsRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+
+    //
+    // REQUEST VALIDATION TESTS
+    //
+
+    // VALID REQUESTS
+    @Test
+    void testSaveWithValidRequest_AllFields() throws Exception {
+        String longComment = "a".repeat(500); // Creates a string longer than 500 characters
+        TaxFormDetailsRequest validRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(100)
+                .appraisedValue(1000L)
+                .ratio(0.5)
+                .comments(longComment)
+                .build();
+
+        given(taxFormService.save(taxFormDto.getId(), validRequest)).willReturn(Optional.of(taxFormDto));
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(validRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(taxFormDto)));
+    }
+
+    @Test
+    void testSaveWithValidRequest_OptionalFieldsNull() throws Exception {
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(100)
+                .appraisedValue(1000L)
+                .ratio(null)
+                .comments(null)
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ASSESSED VALUE
+    @Test
+    void testSaveWithTooSmallAssessedValue() throws Exception {
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(-1)
+                .appraisedValue(1000L)
+                .ratio(0.5)
+                .comments("testing")
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testSaveWithTooLargeAssessedValue() throws Exception {
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(100001)
+                .appraisedValue(1000L)
+                .ratio(0.5)
+                .comments("testing")
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testSaveWithNullAssessedValue() throws Exception {
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(null)
+                .appraisedValue(1000L)
+                .ratio(null)
+                .comments("testing")
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    // RATIO
+    @Test
+    void testSaveWithTooLargeRatio() throws Exception {
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(100)
+                .appraisedValue(1000L)
+                .ratio(1.1) // Greater than 1.0
+                .comments("testing")
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testSaveWithTooSmallRatio() throws Exception {
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(100)
+                .appraisedValue(1000L)
+                .ratio(-0.1) // Greater than 1.0
+                .comments("testing")
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    // APPRAISED VALUE
+    @Test
+    void testSaveWithNullAppraisedValue() throws Exception {
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(100)
+                .appraisedValue(1000L)
+                .ratio(null)
+                .comments("testing")
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    // COMMENTS
+    @Test
+    void testSaveWithTooLongComment() throws Exception {
+        String longComment = "a".repeat(501); // Creates a string longer than 500 characters
+        TaxFormDetailsRequest invalidRequest = TaxFormDetailsRequest.builder()
+                .assessedValue(100)
+                .appraisedValue(1000L)
+                .ratio(0.5)
+                .comments(longComment)
+                .build();
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId())
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 }
