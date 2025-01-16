@@ -18,7 +18,14 @@ public class TaxFormStatusUtils {
     }
 
     public static void submit(TaxForm taxForm) throws TaxFormStatusException {
-        // Implement with task 3
+        if (!taxForm.getStatus().equals(TaxFormStatus.IN_PROGRESS)) {
+            throw new TaxFormStatusException(
+                    taxForm,
+                    TaxFormStatus.SUBMITTED
+            );
+        }
+
+        taxForm.setStatus(TaxFormStatus.SUBMITTED);
     }
 
     public static void returnForm(TaxForm taxForm) throws TaxFormStatusException {

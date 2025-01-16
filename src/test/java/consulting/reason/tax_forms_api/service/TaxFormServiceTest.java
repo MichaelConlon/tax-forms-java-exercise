@@ -10,6 +10,7 @@ import consulting.reason.tax_forms_api.entity.TaxFormHistory;
 import consulting.reason.tax_forms_api.enums.TaxFormHistoryStatus;
 import consulting.reason.tax_forms_api.enums.TaxFormStatus;
 import consulting.reason.tax_forms_api.exception.TaxFormStatusException;
+import consulting.reason.tax_forms_api.repository.TaxFormHistoryRepository;
 import consulting.reason.tax_forms_api.repository.TaxFormRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class TaxFormServiceTest extends AbstractServiceTest {
     @Autowired
     private TaxFormRepository taxFormRepository;
+    @Autowired
+    private TaxFormHistoryRepository taxFormHistoryRepository;
     private TaxFormService taxFormService;
     private TaxForm taxForm;
     private TaxFormDto taxFormDto;
@@ -40,6 +43,7 @@ public class TaxFormServiceTest extends AbstractServiceTest {
     @BeforeEach
     void before() {
         taxFormService = new TaxFormServiceImpl(
+                taxFormHistoryRepository,
                 taxFormRepository,
                 modelMapper
         );
@@ -101,5 +105,39 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         assertThatThrownBy(() -> taxFormService.save(taxForm.getId(), taxFormDetailsRequest))
                 .isInstanceOf(TaxFormStatusException.class)
                 .hasMessage(taxFormStatusException.getMessage());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TaxFormStatus.class, names = {
+            "NOT_STARTED",
+            "SUBMITTED",
+            "ACCEPTED"
+    })
+    void testSubmitHandlesInvalidStatus(TaxFormStatus taxFormStatus) {
+        taxForm.setStatus(taxFormStatus);
+
+        TaxFormStatusException taxFormStatusException = new TaxFormStatusException(
+                taxForm,
+                TaxFormStatus.SUBMITTED
+        );
+
+        assertThatThrownBy(() -> taxFormService.submit(taxForm.getId()))
+                .isInstanceOf(TaxFormStatusException.class)
+                .hasMessage(taxFormStatusException.getMessage());
+    }
+
+    @Test
+    void testSubmitSuccess() {
+        taxForm.setStatus(TaxFormStatus.IN_PROGRESS);
+        
+        Optional<TaxFormDto> result = taxFormService.submit(taxForm.getId());
+        
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+    }
+
+    @Test
+    void testSubmitNotFound() {
+        assertThat(taxFormService.submit(0)).isEmpty();
     }
 }
