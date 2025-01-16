@@ -3,10 +3,8 @@ package consulting.reason.tax_forms_api.service;
 import consulting.reason.tax_forms_api.AbstractServiceTest;
 import consulting.reason.tax_forms_api.dto.TaxFormDetailsDto;
 import consulting.reason.tax_forms_api.dto.TaxFormDto;
-import consulting.reason.tax_forms_api.dto.TaxFormHistoryDto;
 import consulting.reason.tax_forms_api.dto.request.TaxFormDetailsRequest;
 import consulting.reason.tax_forms_api.entity.TaxForm;
-import consulting.reason.tax_forms_api.entity.TaxFormHistory;
 import consulting.reason.tax_forms_api.enums.TaxFormHistoryStatus;
 import consulting.reason.tax_forms_api.enums.TaxFormStatus;
 import consulting.reason.tax_forms_api.exception.TaxFormStatusException;
@@ -31,8 +29,6 @@ public class TaxFormServiceTest extends AbstractServiceTest {
     private TaxFormService taxFormService;
     private TaxForm taxForm;
     private TaxFormDto taxFormDto;
-    private TaxFormHistoryDto taxFormHistoryDto;
-    private TaxFormHistory taxFormHistory;
     private final TaxFormDetailsRequest taxFormDetailsRequest = TaxFormDetailsRequest.builder()
             .ratio(0.5)
             .assessedValue(100)
@@ -47,11 +43,6 @@ public class TaxFormServiceTest extends AbstractServiceTest {
                 taxFormRepository,
                 modelMapper
         );
-
-        taxFormHistory = TaxFormHistory.builder()
-                .taxForm(taxForm)
-                .status(TaxFormHistoryStatus.SUBMITTED)
-                .build();
 
         taxForm = taxFormRepository.save(TaxForm.builder()
                 .formName("Test Form 1")
@@ -111,8 +102,13 @@ public class TaxFormServiceTest extends AbstractServiceTest {
     @EnumSource(value = TaxFormStatus.class, names = {
             "NOT_STARTED",
             "SUBMITTED",
-            "ACCEPTED"
+            "ACCEPTED",
+            "RETURNED"
     })
+
+    //
+    // SUBMIT FROM
+    //
     void testSubmitHandlesInvalidStatus(TaxFormStatus taxFormStatus) {
         taxForm.setStatus(taxFormStatus);
 
@@ -134,10 +130,57 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         
         assertThat(result).isPresent();
         assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+
+        // Check that the history was created
+        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
+        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
     }
 
     @Test
     void testSubmitNotFound() {
         assertThat(taxFormService.submit(0)).isEmpty();
+    }
+
+    //
+    // RETURN FROM
+    //
+    @ParameterizedTest
+    @EnumSource(value = TaxFormStatus.class, names = {
+            "NOT_STARTED",
+            "IN_PROGRESS",
+            "RETURNED",
+            "ACCEPTED"
+    })
+    void testReturnFormHandlesInvalidStatus(TaxFormStatus taxFormStatus) {
+        taxForm.setStatus(taxFormStatus);
+
+        TaxFormStatusException taxFormStatusException = new TaxFormStatusException(
+                taxForm,
+                TaxFormStatus.RETURNED
+        );
+
+        assertThatThrownBy(() -> taxFormService.returnForm(taxForm.getId()))
+                .isInstanceOf(TaxFormStatusException.class)
+                .hasMessage(taxFormStatusException.getMessage());
+    }
+
+    @Test
+    void testReturnFormSuccess() {
+        taxForm.setStatus(TaxFormStatus.SUBMITTED);
+        
+        Optional<TaxFormDto> result = taxFormService.returnForm(taxForm.getId());
+        
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.RETURNED);
+
+        // Check that the history was created
+        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
+        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus())
+                .isEqualTo(TaxFormHistoryStatus.RETURNED);
+    }
+
+    @Test
+    void testReturnFormNotFound() {
+        assertThat(taxFormService.returnForm(0)).isEmpty();
     }
 }

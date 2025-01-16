@@ -5,8 +5,6 @@ import consulting.reason.tax_forms_api.dto.TaxFormDto;
 import consulting.reason.tax_forms_api.dto.request.TaxFormDetailsRequest;
 import consulting.reason.tax_forms_api.entity.TaxFormHistory;
 import consulting.reason.tax_forms_api.enums.TaxFormHistoryStatus;
-import consulting.reason.tax_forms_api.enums.TaxFormStatus;
-import consulting.reason.tax_forms_api.exception.TaxFormStatusException;
 import consulting.reason.tax_forms_api.repository.TaxFormHistoryRepository;
 import consulting.reason.tax_forms_api.repository.TaxFormRepository;
 import consulting.reason.tax_forms_api.util.TaxFormStatusUtils;
@@ -62,13 +60,11 @@ public class TaxFormServiceImpl implements TaxFormService {
                 .map(taxForm -> {
                     TaxFormStatusUtils.submit(taxForm);
 
-                    // Updated status and create history
                     TaxFormHistory taxFormHistory = TaxFormHistory.builder()
                             .taxForm(taxForm)
                             .status(TaxFormHistoryStatus.SUBMITTED)
                             .build();
 
-                    // Save 
                     taxFormHistoryRepository.save(taxFormHistory);
                     taxFormRepository.save(taxForm);
 
@@ -76,4 +72,22 @@ public class TaxFormServiceImpl implements TaxFormService {
                 });
     }
 
+    @Override
+    @Transactional
+    public Optional<TaxFormDto> returnForm(Integer id) {
+        return taxFormRepository.findById(id)
+                .map(taxForm -> {
+                    TaxFormStatusUtils.returnForm(taxForm);
+
+                    TaxFormHistory taxFormHistory = TaxFormHistory.builder()
+                            .taxForm(taxForm)
+                            .status(TaxFormHistoryStatus.RETURNED)
+                            .build();
+
+                    taxFormHistoryRepository.save(taxFormHistory);
+                    taxFormRepository.save(taxForm);
+
+                    return modelMapper.map(taxForm, TaxFormDto.class);
+                });
+    }
 }

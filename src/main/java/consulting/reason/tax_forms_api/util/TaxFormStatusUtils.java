@@ -29,7 +29,14 @@ public class TaxFormStatusUtils {
     }
 
     public static void returnForm(TaxForm taxForm) throws TaxFormStatusException {
-        // Implement with task 4
+        if (!taxForm.getStatus().equals(TaxFormStatus.SUBMITTED)) {
+            throw new TaxFormStatusException(
+                    taxForm,
+                    TaxFormStatus.RETURNED
+            );
+        }
+
+        taxForm.setStatus(TaxFormStatus.RETURNED);
     }
 
     public static void accept(TaxForm taxForm) throws TaxFormStatusException {

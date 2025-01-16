@@ -65,7 +65,8 @@ public class TaxFormStatusUtilsTest {
     @EnumSource(value = TaxFormStatus.class, names = {
             "NOT_STARTED",
             "SUBMITTED",
-            "ACCEPTED"
+            "ACCEPTED",
+            "RETURNED"
     })
     void testSubmitNotPermitted(TaxFormStatus taxFormStatus) {
         taxForm.setStatus(taxFormStatus);
@@ -75,6 +76,35 @@ public class TaxFormStatusUtilsTest {
         );
 
         assertThatThrownBy(() -> TaxFormStatusUtils.submit(taxForm))
+                .isInstanceOf(TaxFormStatusException.class)
+                .hasMessage(taxFormStatusException.getMessage());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TaxFormStatus.class, names = {
+            "SUBMITTED"
+    })
+    void testReturnFormPermitted(TaxFormStatus taxFormStatus) {
+        taxForm.setStatus(taxFormStatus);
+        TaxFormStatusUtils.returnForm(taxForm);
+        assertThat(taxForm.getStatus()).isEqualTo(TaxFormStatus.RETURNED);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TaxFormStatus.class, names = {
+            "NOT_STARTED",
+            "IN_PROGRESS",
+            "ACCEPTED",
+            "RETURNED"
+    })
+    void testReturnFormNotPermitted(TaxFormStatus taxFormStatus) {
+        taxForm.setStatus(taxFormStatus);
+        TaxFormStatusException taxFormStatusException = new TaxFormStatusException(
+                taxForm,
+                TaxFormStatus.RETURNED
+        );
+
+        assertThatThrownBy(() -> TaxFormStatusUtils.returnForm(taxForm))
                 .isInstanceOf(TaxFormStatusException.class)
                 .hasMessage(taxFormStatusException.getMessage());
     }
