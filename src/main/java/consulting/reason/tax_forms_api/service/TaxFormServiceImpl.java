@@ -66,7 +66,6 @@ public class TaxFormServiceImpl implements TaxFormService {
                             .build();
 
                     taxFormHistoryRepository.save(taxFormHistory);
-                    taxFormRepository.save(taxForm);
 
                     return modelMapper.map(taxForm, TaxFormDto.class);
                 });
@@ -85,7 +84,24 @@ public class TaxFormServiceImpl implements TaxFormService {
                             .build();
 
                     taxFormHistoryRepository.save(taxFormHistory);
-                    taxFormRepository.save(taxForm);
+
+                    return modelMapper.map(taxForm, TaxFormDto.class);
+                });
+    }
+
+    @Override
+    @Transactional
+    public Optional<TaxFormDto> accept(Integer id) {
+        return taxFormRepository.findById(id)
+                .map(taxForm -> {
+                    TaxFormStatusUtils.accept(taxForm);
+
+                    TaxFormHistory taxFormHistory = TaxFormHistory.builder()
+                            .taxForm(taxForm)
+                            .status(TaxFormHistoryStatus.ACCEPTED)
+                            .build();
+
+                    taxFormHistoryRepository.save(taxFormHistory);
 
                     return modelMapper.map(taxForm, TaxFormDto.class);
                 });

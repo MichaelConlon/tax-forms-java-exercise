@@ -98,6 +98,9 @@ public class TaxFormServiceTest extends AbstractServiceTest {
                 .hasMessage(taxFormStatusException.getMessage());
     }
 
+    //
+    // SUBMIT FROM
+    //
     @ParameterizedTest
     @EnumSource(value = TaxFormStatus.class, names = {
             "NOT_STARTED",
@@ -105,10 +108,6 @@ public class TaxFormServiceTest extends AbstractServiceTest {
             "ACCEPTED",
             "RETURNED"
     })
-
-    //
-    // SUBMIT FROM
-    //
     void testSubmitHandlesInvalidStatus(TaxFormStatus taxFormStatus) {
         taxForm.setStatus(taxFormStatus);
 
@@ -134,6 +133,8 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         // Check that the history was created
         assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
         assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
+        assertThat(taxFormRepository.findById(taxForm.getId()).get().getStatus())
+                .isEqualTo(TaxFormStatus.SUBMITTED);
     }
 
     @Test
@@ -177,10 +178,57 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
         assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus())
                 .isEqualTo(TaxFormHistoryStatus.RETURNED);
+        assertThat(taxFormRepository.findById(taxForm.getId()).get().getStatus())
+                .isEqualTo(TaxFormStatus.RETURNED);
     }
 
     @Test
     void testReturnFormNotFound() {
         assertThat(taxFormService.returnForm(0)).isEmpty();
+    }
+
+    //
+    // ACCEPT FORM
+    //
+    @ParameterizedTest
+    @EnumSource(value = TaxFormStatus.class, names = {
+            "NOT_STARTED",
+            "IN_PROGRESS",
+            "RETURNED",
+            "ACCEPTED"
+    })
+    void testAcceptFormHandlesInvalidStatus(TaxFormStatus taxFormStatus) {
+        taxForm.setStatus(taxFormStatus);
+
+        TaxFormStatusException taxFormStatusException = new TaxFormStatusException(
+                taxForm,
+                TaxFormStatus.ACCEPTED
+        );
+
+        assertThatThrownBy(() -> taxFormService.accept(taxForm.getId()))
+                .isInstanceOf(TaxFormStatusException.class)
+                .hasMessage(taxFormStatusException.getMessage());
+    }
+
+    @Test
+    void testAcceptFormSuccess() {
+        taxForm.setStatus(TaxFormStatus.SUBMITTED);
+        
+        Optional<TaxFormDto> result = taxFormService.accept(taxForm.getId());
+        
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
+
+        // Check that the history was created
+        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
+        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus())
+                .isEqualTo(TaxFormHistoryStatus.ACCEPTED);
+        assertThat(taxFormRepository.findById(taxForm.getId()).get().getStatus())
+                .isEqualTo(TaxFormStatus.ACCEPTED);
+    }
+
+    @Test
+    void testAcceptFormNotFound() {
+        assertThat(taxFormService.accept(0)).isEmpty();
     }
 }

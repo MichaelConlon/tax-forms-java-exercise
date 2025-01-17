@@ -132,6 +132,23 @@ public class TaxFormControllerTest extends AbstractControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void testAccept() throws Exception {
+        given(taxFormService.accept(taxFormDto.getId())).willReturn(Optional.of(taxFormDto));
+
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId() + "/accept")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(objectMapper.writeValueAsString(taxFormDto)));
+    }
+
+    @Test
+    void testAcceptHandlesNotFound() throws Exception {
+        mockMvc.perform(patch(Endpoints.FORMS + "/" + taxFormDto.getId() + "/accept")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
     //
     // REQUEST VALIDATION TESTS
     //

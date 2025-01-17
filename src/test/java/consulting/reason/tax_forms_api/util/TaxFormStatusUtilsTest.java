@@ -4,6 +4,7 @@ import consulting.reason.tax_forms_api.entity.TaxForm;
 import consulting.reason.tax_forms_api.enums.TaxFormStatus;
 import consulting.reason.tax_forms_api.exception.TaxFormStatusException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -51,12 +52,9 @@ public class TaxFormStatusUtilsTest {
                 .hasMessage(taxFormStatusException.getMessage());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = TaxFormStatus.class, names = {
-            "IN_PROGRESS"
-    })
-    void testSubmitPermitted(TaxFormStatus taxFormStatus) {
-        taxForm.setStatus(taxFormStatus);
+    @Test
+    void testSubmitPermitted() {
+        taxForm.setStatus(TaxFormStatus.IN_PROGRESS);
         TaxFormStatusUtils.submit(taxForm);
         assertThat(taxForm.getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
     }
@@ -80,12 +78,9 @@ public class TaxFormStatusUtilsTest {
                 .hasMessage(taxFormStatusException.getMessage());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = TaxFormStatus.class, names = {
-            "SUBMITTED"
-    })
-    void testReturnFormPermitted(TaxFormStatus taxFormStatus) {
-        taxForm.setStatus(taxFormStatus);
+    @Test
+    void testReturnFormPermitted() {
+        taxForm.setStatus(TaxFormStatus.SUBMITTED);
         TaxFormStatusUtils.returnForm(taxForm);
         assertThat(taxForm.getStatus()).isEqualTo(TaxFormStatus.RETURNED);
     }
@@ -105,6 +100,32 @@ public class TaxFormStatusUtilsTest {
         );
 
         assertThatThrownBy(() -> TaxFormStatusUtils.returnForm(taxForm))
+                .isInstanceOf(TaxFormStatusException.class)
+                .hasMessage(taxFormStatusException.getMessage());
+    }
+
+    @Test
+    void testAcceptPermitted() {
+        taxForm.setStatus(TaxFormStatus.SUBMITTED);
+        TaxFormStatusUtils.accept(taxForm);
+        assertThat(taxForm.getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TaxFormStatus.class, names = {
+            "NOT_STARTED",
+            "IN_PROGRESS",
+            "ACCEPTED",
+            "RETURNED"
+    })
+    void testAcceptNotPermitted(TaxFormStatus taxFormStatus) {
+        taxForm.setStatus(taxFormStatus);
+        TaxFormStatusException taxFormStatusException = new TaxFormStatusException(
+                taxForm,
+                TaxFormStatus.ACCEPTED
+        );
+
+        assertThatThrownBy(() -> TaxFormStatusUtils.accept(taxForm))
                 .isInstanceOf(TaxFormStatusException.class)
                 .hasMessage(taxFormStatusException.getMessage());
     }
