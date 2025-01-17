@@ -32,6 +32,7 @@ public class ModelMapperConfig {
 
         modelMapper.typeMap(TaxForm.class, TaxFormDto.class).setConverter(context -> {
             TaxForm taxForm = context.getSource();
+            ModelMapper modelMap = new ModelMapper();
 
             return TaxFormDto.builder()
                     .id(taxForm.getId())
@@ -41,6 +42,12 @@ public class ModelMapperConfig {
                     .details(taxForm.getDetails())
                     .createdAt(taxForm.getCreatedAt())
                     .updatedAt(taxForm.getUpdatedAt())
+                    .history(taxForm.getHistory() != null
+                                ? taxForm.getHistory()
+                                    .stream()
+                                    .map(history-> modelMap.map(history, TaxFormHistoryDto.class))
+                                    .toList() 
+                                : null)
                     .build();
         });
 

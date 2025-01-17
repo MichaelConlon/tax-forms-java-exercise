@@ -10,6 +10,8 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -39,9 +41,20 @@ public class TaxForm {
     @Column(nullable = false)
     private TaxFormStatus status;
 
+    @OneToMany(mappedBy = "taxForm", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<TaxFormHistory> history;
+
     @CreationTimestamp
     private ZonedDateTime createdAt;
 
     @UpdateTimestamp
     private ZonedDateTime updatedAt;
+
+    public void addHistory(TaxFormHistory history) {
+        if (this.history == null) {
+            this.history = new ArrayList<>();
+        }
+        this.history.add(history);
+        history.setTaxForm(this);
+    }
 }

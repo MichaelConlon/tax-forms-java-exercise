@@ -5,17 +5,19 @@ import consulting.reason.tax_forms_api.dto.TaxFormDetailsDto;
 import consulting.reason.tax_forms_api.dto.TaxFormDto;
 import consulting.reason.tax_forms_api.dto.request.TaxFormDetailsRequest;
 import consulting.reason.tax_forms_api.entity.TaxForm;
+import consulting.reason.tax_forms_api.entity.TaxFormHistory;
 import consulting.reason.tax_forms_api.enums.TaxFormHistoryStatus;
 import consulting.reason.tax_forms_api.enums.TaxFormStatus;
 import consulting.reason.tax_forms_api.exception.TaxFormStatusException;
-import consulting.reason.tax_forms_api.repository.TaxFormHistoryRepository;
 import consulting.reason.tax_forms_api.repository.TaxFormRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,8 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class TaxFormServiceTest extends AbstractServiceTest {
     @Autowired
     private TaxFormRepository taxFormRepository;
-    @Autowired
-    private TaxFormHistoryRepository taxFormHistoryRepository;
     private TaxFormService taxFormService;
     private TaxForm taxForm;
     private TaxFormDto taxFormDto;
@@ -39,7 +39,6 @@ public class TaxFormServiceTest extends AbstractServiceTest {
     @BeforeEach
     void before() {
         taxFormService = new TaxFormServiceImpl(
-                taxFormHistoryRepository,
                 taxFormRepository,
                 modelMapper
         );
@@ -130,11 +129,14 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
 
+        TaxForm taxResult = taxFormRepository.findById(taxForm.getId()).get();
+        assertThat(taxResult.getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+
         // Check that the history was created
-        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
-        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
-        assertThat(taxFormRepository.findById(taxForm.getId()).get().getStatus())
-                .isEqualTo(TaxFormStatus.SUBMITTED);
+        List<TaxFormHistory> taxHistoryResult = taxResult.getHistory();
+        assertThat(taxHistoryResult.size()).isEqualTo(1);
+        assertThat(taxHistoryResult.get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
+        
     }
 
     @Test
@@ -174,12 +176,13 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.RETURNED);
 
+        TaxForm taxResult = taxFormRepository.findById(taxForm.getId()).get();
+        assertThat(taxResult.getStatus()).isEqualTo(TaxFormStatus.RETURNED);
+
         // Check that the history was created
-        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
-        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus())
-                .isEqualTo(TaxFormHistoryStatus.RETURNED);
-        assertThat(taxFormRepository.findById(taxForm.getId()).get().getStatus())
-                .isEqualTo(TaxFormStatus.RETURNED);
+        List<TaxFormHistory> taxHistoryResult = taxResult.getHistory();
+        assertThat(taxHistoryResult.size()).isEqualTo(1);
+        assertThat(taxHistoryResult.get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.RETURNED);
     }
 
     @Test
@@ -219,12 +222,13 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
 
+        TaxForm taxResult = taxFormRepository.findById(taxForm.getId()).get();
+        assertThat(taxResult.getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
+
         // Check that the history was created
-        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId())).isPresent();
-        assertThat(taxFormHistoryRepository.findByTaxFormId(taxForm.getId()).get().getStatus())
-                .isEqualTo(TaxFormHistoryStatus.ACCEPTED);
-        assertThat(taxFormRepository.findById(taxForm.getId()).get().getStatus())
-                .isEqualTo(TaxFormStatus.ACCEPTED);
+        List<TaxFormHistory> taxHistoryResult = taxResult.getHistory();
+        assertThat(taxHistoryResult.size()).isEqualTo(1);
+        assertThat(taxHistoryResult.get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.ACCEPTED);
     }
 
     @Test

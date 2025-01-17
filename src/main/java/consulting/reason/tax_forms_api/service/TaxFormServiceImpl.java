@@ -5,7 +5,6 @@ import consulting.reason.tax_forms_api.dto.TaxFormDto;
 import consulting.reason.tax_forms_api.dto.request.TaxFormDetailsRequest;
 import consulting.reason.tax_forms_api.entity.TaxFormHistory;
 import consulting.reason.tax_forms_api.enums.TaxFormHistoryStatus;
-import consulting.reason.tax_forms_api.repository.TaxFormHistoryRepository;
 import consulting.reason.tax_forms_api.repository.TaxFormRepository;
 import consulting.reason.tax_forms_api.util.TaxFormStatusUtils;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class TaxFormServiceImpl implements TaxFormService {
-    private final TaxFormHistoryRepository taxFormHistoryRepository;
     private final TaxFormRepository taxFormRepository;
     private final ModelMapper modelMapper;
 
@@ -65,7 +63,9 @@ public class TaxFormServiceImpl implements TaxFormService {
                             .status(TaxFormHistoryStatus.SUBMITTED)
                             .build();
 
-                    taxFormHistoryRepository.save(taxFormHistory);
+                    taxForm.addHistory(taxFormHistory);
+
+                    taxFormRepository.save(taxForm);
 
                     return modelMapper.map(taxForm, TaxFormDto.class);
                 });
@@ -83,7 +83,9 @@ public class TaxFormServiceImpl implements TaxFormService {
                             .status(TaxFormHistoryStatus.RETURNED)
                             .build();
 
-                    taxFormHistoryRepository.save(taxFormHistory);
+                    taxForm.addHistory(taxFormHistory);
+
+                    taxFormRepository.save(taxForm);
 
                     return modelMapper.map(taxForm, TaxFormDto.class);
                 });
@@ -101,7 +103,9 @@ public class TaxFormServiceImpl implements TaxFormService {
                             .status(TaxFormHistoryStatus.ACCEPTED)
                             .build();
 
-                    taxFormHistoryRepository.save(taxFormHistory);
+                    taxForm.addHistory(taxFormHistory);
+
+                    taxFormRepository.save(taxForm);
 
                     return modelMapper.map(taxForm, TaxFormDto.class);
                 });
