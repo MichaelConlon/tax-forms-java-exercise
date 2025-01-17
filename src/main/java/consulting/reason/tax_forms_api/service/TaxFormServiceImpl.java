@@ -60,7 +60,7 @@ public class TaxFormServiceImpl implements TaxFormService {
 
                     TaxFormHistory taxFormHistory = TaxFormHistory.builder()
                             .taxForm(taxForm)
-                            .status(TaxFormHistoryStatus.SUBMITTED)
+                            .type(TaxFormHistoryStatus.SUBMITTED)
                             .build();
 
                     taxForm.addHistory(taxFormHistory);
@@ -80,7 +80,7 @@ public class TaxFormServiceImpl implements TaxFormService {
 
                     TaxFormHistory taxFormHistory = TaxFormHistory.builder()
                             .taxForm(taxForm)
-                            .status(TaxFormHistoryStatus.RETURNED)
+                            .type(TaxFormHistoryStatus.RETURNED)
                             .build();
 
                     taxForm.addHistory(taxFormHistory);
@@ -100,7 +100,7 @@ public class TaxFormServiceImpl implements TaxFormService {
 
                     TaxFormHistory taxFormHistory = TaxFormHistory.builder()
                             .taxForm(taxForm)
-                            .status(TaxFormHistoryStatus.ACCEPTED)
+                            .type(TaxFormHistoryStatus.ACCEPTED)
                             .build();
 
                     taxForm.addHistory(taxFormHistory);

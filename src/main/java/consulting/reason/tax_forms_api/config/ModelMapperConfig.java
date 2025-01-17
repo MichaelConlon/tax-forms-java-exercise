@@ -57,7 +57,7 @@ public class ModelMapperConfig {
             return TaxFormHistoryDto.builder()
                     .taxFormId(taxFormHistory.getTaxForm().getId())
                     .createdAt(taxFormHistory.getCreatedAt())
-                    .status(taxFormHistory.getStatus())
+                    .type(taxFormHistory.getType())
                     .build();
         });
 

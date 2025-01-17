@@ -7,6 +7,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import consulting.reason.tax_forms_api.enums.TaxFormHistoryStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,8 +36,9 @@ public class TaxFormHistory {
     @JoinColumn(name = "tax_form_id", nullable = false)
     private TaxForm taxForm;
 
-    @Column(nullable = false)
-    private TaxFormHistoryStatus status;
+    @Column(name = "type", nullable = false)
+     @Enumerated(value = EnumType.STRING)
+    private TaxFormHistoryStatus type;
 
     @Column(nullable = false)
     @CreationTimestamp
