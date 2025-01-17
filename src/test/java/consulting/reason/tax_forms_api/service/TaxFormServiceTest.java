@@ -128,6 +128,8 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         
         assertThat(result).isPresent();
         assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(1);
+        assertThat(result.get().getHistory().get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
 
         TaxForm taxResult = taxFormRepository.findById(taxForm.getId()).get();
         assertThat(taxResult.getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
@@ -175,6 +177,8 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         
         assertThat(result).isPresent();
         assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.RETURNED);
+        assertThat(result.get().getHistory().size()).isEqualTo(1);
+        assertThat(result.get().getHistory().get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.RETURNED);
 
         TaxForm taxResult = taxFormRepository.findById(taxForm.getId()).get();
         assertThat(taxResult.getStatus()).isEqualTo(TaxFormStatus.RETURNED);
@@ -219,9 +223,13 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         
         Optional<TaxFormDto> result = taxFormService.accept(taxForm.getId());
         
+        // Check Return values
         assertThat(result).isPresent();
         assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(1);
+        assertThat(result.get().getHistory().get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.ACCEPTED);
 
+        // Check DB was updated
         TaxForm taxResult = taxFormRepository.findById(taxForm.getId()).get();
         assertThat(taxResult.getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
 
@@ -229,6 +237,85 @@ public class TaxFormServiceTest extends AbstractServiceTest {
         List<TaxFormHistory> taxHistoryResult = taxResult.getHistory();
         assertThat(taxHistoryResult.size()).isEqualTo(1);
         assertThat(taxHistoryResult.get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.ACCEPTED);
+    }
+
+    @Test
+    void testSubmitAndReturn() {
+        taxForm.setStatus(TaxFormStatus.IN_PROGRESS);
+        
+        Optional<TaxFormDto> result = taxFormService.submit(taxForm.getId());
+        
+        // Check Return values
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(1);
+        assertThat(result.get().getHistory().get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
+
+        result = taxFormService.returnForm(taxForm.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.RETURNED);
+        assertThat(result.get().getHistory().size()).isEqualTo(2);
+        assertThat(result.get().getHistory().get(1).getStatus()).isEqualTo(TaxFormHistoryStatus.RETURNED);
+    }
+
+    @Test
+    void testSubmitAndAccept() {
+        taxForm.setStatus(TaxFormStatus.IN_PROGRESS);
+        
+        Optional<TaxFormDto> result = taxFormService.submit(taxForm.getId());
+        
+        // Check Return values
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(1);
+        assertThat(result.get().getHistory().get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
+
+        result = taxFormService.accept(taxForm.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(2);
+        assertThat(result.get().getHistory().get(1).getStatus()).isEqualTo(TaxFormHistoryStatus.ACCEPTED);
+    }
+
+    @Test
+    void testSubmitAndReturnAndAccept() {
+        // Set initial status
+        taxForm.setStatus(TaxFormStatus.IN_PROGRESS);
+        
+        // Submit
+        Optional<TaxFormDto> result = taxFormService.submit(taxForm.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(1);
+        assertThat(result.get().getHistory().get(0).getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
+
+        // Return
+        result = taxFormService.returnForm(taxForm.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.RETURNED);
+        assertThat(result.get().getHistory().size()).isEqualTo(2);
+        assertThat(result.get().getHistory().get(1).getStatus()).isEqualTo(TaxFormHistoryStatus.RETURNED);
+
+        // Save - Make changes (in theory)
+        result = taxFormService.save(taxForm.getId(), taxFormDetailsRequest);
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.IN_PROGRESS);
+        assertThat(result.get().getHistory().size()).isEqualTo(2); // Save doesn't update history
+        assertThat(result.get().getHistory().get(1).getStatus()).isEqualTo(TaxFormHistoryStatus.RETURNED);
+
+        // Submit Again
+        result = taxFormService.submit(taxForm.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.SUBMITTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(3);
+        assertThat(result.get().getHistory().get(2).getStatus()).isEqualTo(TaxFormHistoryStatus.SUBMITTED);
+
+        // Accept
+        result = taxFormService.accept(taxForm.getId());
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(TaxFormStatus.ACCEPTED);
+        assertThat(result.get().getHistory().size()).isEqualTo(4);
+        assertThat(result.get().getHistory().get(3).getStatus()).isEqualTo(TaxFormHistoryStatus.ACCEPTED);
     }
 
     @Test
